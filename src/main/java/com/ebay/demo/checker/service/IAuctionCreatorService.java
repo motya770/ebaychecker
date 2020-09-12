@@ -6,5 +6,5 @@ import com.ebay.demo.checker.model.AuctionRequestReponce;
 public interface IAuctionCreatorService {
     void startCreateAuctionsFromFile(String filePath);
 
-    AuctionRequestReponce createSingleAuction(String itemUuId);
+    AuctionRequestReponce createSingleAuction(AuctionRequestReponce auctionRequestReponce);
 }

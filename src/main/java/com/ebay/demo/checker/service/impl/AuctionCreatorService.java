@@ -4,6 +4,7 @@ import com.ebay.demo.checker.model.AuctionRequest;
 import com.ebay.demo.checker.model.AuctionRequestReponce;
 import com.ebay.demo.checker.model.AuctionResponse;
 import com.ebay.demo.checker.service.IAuctionCreatorService;
+import com.ebay.demo.checker.service.ISchedulerService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.client.ServiceInstance;
@@ -24,6 +25,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.stream.Stream;
 
 @Slf4j
@@ -35,6 +37,9 @@ public class AuctionCreatorService implements IAuctionCreatorService {
 
     @Autowired
     private DiscoveryClient discoveryClient;
+
+    @Autowired
+    private ISchedulerService schedulerService;
 
     @PostConstruct
     public void init(){
@@ -60,7 +65,7 @@ public class AuctionCreatorService implements IAuctionCreatorService {
         try (Stream<String> stream = Files.lines(file.toPath())) {
             stream.forEach(line -> {
                 log.info("Working on {}", line);
-                createSingleAuction(line);
+                schedulerService.scheduleAuction(line);
             });
         }catch (Exception e){
             log.error("", e);
@@ -68,23 +73,12 @@ public class AuctionCreatorService implements IAuctionCreatorService {
     }
 
     @Override
-    public AuctionRequestReponce createSingleAuction(String itemUuId) {
+    public AuctionRequestReponce createSingleAuction(AuctionRequestReponce auctionRequestReponce) {
 
-        AuctionRequestReponce requestReponce = new AuctionRequestReponce();
-
-
-
-        LocalDateTime fromTime = LocalDateTime.of(LocalDate.now(), LocalTime.MIN);
-        LocalDateTime toTime = fromTime.plus(2, ChronoUnit.HOURS);
-
-        AuctionRequest auctionRequest = new AuctionRequest();
-        auctionRequest.setFromTime(fromTime);
-        auctionRequest.setToTime(toTime);
-        auctionRequest.setItemId(itemUuId);
-        requestReponce.setAuctionRequest(auctionRequest);
+        AuctionRequest auctionRequest = auctionRequestReponce.getAuctionRequest();
 
         try {
-            if (StringUtils.isEmpty(itemUuId)) {
+            if (StringUtils.isEmpty(auctionRequestReponce.getAuctionRequest().getItemId())) {
                 throw new RuntimeException("Can't call for empty itemUuid.");
             }
 
@@ -95,19 +89,19 @@ public class AuctionCreatorService implements IAuctionCreatorService {
             String response = restTemplate
                     .postForObject(  "http://" + instance.getHost() + ":" +  instance.getPort() +
                                     "/auction/set-auction?fromTime="
-                                    + fromTime.toString() + "&toTime=" + toTime.toString() + "&itemId=" + itemUuId,
+                                    + auctionRequest.toString() + "&toTime=" + auctionRequest.toString() + "&itemId=" + auctionRequest.getItemId(),
                             null, String.class);
 
             AuctionResponse auctionResponse = new AuctionResponse();
             auctionResponse.setMessage(response);
 
-            requestReponce.setAuctionResponse(auctionResponse);
+            auctionRequestReponce.setAuctionResponse(auctionResponse);
             log.info("response {}", response);
         }catch (Exception e){
             log.error("", e);
         }
 
-        return requestReponce;
+        return auctionRequestReponce;
 
 //        Mono<String> response = client.post()
 //                .uri("localhost:8080/auction/set-action")
