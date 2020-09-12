@@ -65,15 +65,18 @@ public class AuctionCreatorService implements IAuctionCreatorService {
             throw new RuntimeException("Can't call for empty itemUuid.");
         }
 
-        LocalDateTime startTime = LocalDateTime.now();
-        LocalDateTime endTime = startTime.plus(2, ChronoUnit.HOURS);
+        LocalDateTime fromTime = LocalDateTime.now();
+        LocalDateTime toTime = fromTime.plus(2, ChronoUnit.HOURS);
 
         AuctionRequestBody auctionRequestBody= new AuctionRequestBody();
-        auctionRequestBody.setFromTime(startTime);
-        auctionRequestBody.setToTime(endTime);
+        auctionRequestBody.setFromTime(fromTime);
+        auctionRequestBody.setToTime(toTime);
         auctionRequestBody.setItemId(itemUuId);
 
-        String response =restTemplate.postForObject(  "http://localhost:8080/auction/set-action", auctionRequestBody, String.class);
+        String response =restTemplate
+                .postForObject(  "http://localhost:8080/auction/set-auction?fromTime="
+                        + fromTime.toString() + "&toTime=" + toTime.toString() + "&itemId=" + itemUuId,
+                        null, String.class);
         log.info("response {}", response);
 
 //        Mono<String> response = client.post()
