@@ -20,6 +20,8 @@ public class SchedulerService implements ISchedulerService {
 
     private ConcurrentHashMap<String, SchedulerTask> tasks = new ConcurrentHashMap<>();
 
+    private ConcurrentHashMap<LocalDate, LocalDate> fullDates = new ConcurrentHashMap<>();
+
     private ScheduledExecutorService  executorService = Executors.newScheduledThreadPool(5);
 
     @Autowired
@@ -56,7 +58,18 @@ public class SchedulerService implements ISchedulerService {
         requestResponse.setAuctionRequest(auctionRequest);
 
         requestResponse = auctionCreatorService.createSingleAuction(requestResponse);
-        if(requestResponse.getAuctionResponse()!=null){
+        if(requestResponse.getAuctionResponse().getError() != null){
+
+            if(requestResponse.getAuctionResponse().getError().contains("DayFullAuctionException")){
+                LocalDate fromDate=  requestResponse.getAuctionRequest().getFromTime().toLocalDate();
+                fullDates.put(fromDate, fromDate);
+            }
+            else if(requestResponse.getAuctionResponse().getError().contains("WeekFullAuctionException")){
+                LocalDate fromDate=  requestResponse.getAuctionRequest().getFromTime().toLocalDate();
+                //TODO add all day of the week
+                fullDates.put(fromDate, fromDate);
+            }
+
             SchedulerTask schedulerTask = new SchedulerTask();
             schedulerTask.setSchedulerTaskStatus(SchedulerTaskStatus.REJECTED_TEMPORALLY);
             schedulerTask.setAuctionRequest(requestResponse.getAuctionRequest());

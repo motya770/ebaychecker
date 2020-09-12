@@ -71,7 +71,7 @@ public class AuctionCreatorService implements IAuctionCreatorService {
     public AuctionRequestReponce createSingleAuction(AuctionRequestReponce auctionRequestReponce) {
 
         AuctionRequest auctionRequest = auctionRequestReponce.getAuctionRequest();
-
+        AuctionResponse auctionResponse = new AuctionResponse();
         try {
             if (StringUtils.isEmpty(auctionRequestReponce.getAuctionRequest().getItemId())) {
                 throw new RuntimeException("Can't call for empty itemUuid.");
@@ -87,14 +87,14 @@ public class AuctionCreatorService implements IAuctionCreatorService {
                                     + auctionRequest.toString() + "&toTime=" + auctionRequest.toString() + "&itemId=" + auctionRequest.getItemId(),
                             null, String.class);
 
-            AuctionResponse auctionResponse = new AuctionResponse();
             auctionResponse.setMessage(response);
-
-            auctionRequestReponce.setAuctionResponse(auctionResponse);
             log.info("response {}", response);
         }catch (Exception e){
+            auctionResponse.setError(e.getMessage());
             log.error("", e);
         }
+
+        auctionRequestReponce.setAuctionResponse(auctionResponse);
 
         return auctionRequestReponce;
 

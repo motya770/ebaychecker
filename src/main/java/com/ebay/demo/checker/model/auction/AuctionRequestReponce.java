@@ -7,5 +7,4 @@ public class AuctionRequestReponce {
 
     private AuctionRequest auctionRequest;
     private AuctionResponse auctionResponse;
-
 }
