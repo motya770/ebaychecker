@@ -3,6 +3,9 @@ package com.ebay.demo.checker.service.impl;
 import com.ebay.demo.checker.model.AuctionRequestBody;
 import com.ebay.demo.checker.service.IAuctionCreatorService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.client.ServiceInstance;
+import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -21,6 +24,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.stream.Stream;
 
 @Slf4j
@@ -29,6 +33,9 @@ public class AuctionCreatorService implements IAuctionCreatorService {
     private WebClient client;
 
     RestTemplate restTemplate;
+
+    @Autowired
+    private DiscoveryClient discoveryClient;
 
     @PostConstruct
     public void init(){
@@ -77,8 +84,13 @@ public class AuctionCreatorService implements IAuctionCreatorService {
             auctionRequestBody.setToTime(toTime);
             auctionRequestBody.setItemId(itemUuId);
 
+            List<ServiceInstance> instances =  discoveryClient.getInstances("ebay-auction-service");
+            ServiceInstance instance = instances.get(0);//TODO add roundrobin?
+
+            //TODO think about https
             String response = restTemplate
-                    .postForObject("http://localhost:8080/auction/set-auction?fromTime="
+                    .postForObject(  "http://" + instance.getHost() + ":" +  instance.getPort() +
+                                    "/auction/set-auction?fromTime="
                                     + fromTime.toString() + "&toTime=" + toTime.toString() + "&itemId=" + itemUuId,
                             null, String.class);
             log.info("response {}", response);
