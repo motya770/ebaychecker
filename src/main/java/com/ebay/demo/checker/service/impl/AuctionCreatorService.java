@@ -6,11 +6,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ResourceUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import javax.annotation.PostConstruct;
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
@@ -33,9 +35,17 @@ public class AuctionCreatorService implements IAuctionCreatorService {
 
     @Override
     public void startCreateAuctionsFromFile(String filePath) {
+        File file = null;
+        try {
+            file = ResourceUtils.getFile(
+                    filePath);
+        }catch (Exception e){
+            log.error("", e);
+        }
         //concurrent
-        try (Stream<String> stream = Files.lines(Paths.get(filePath))) {
-            stream.parallel().forEach(line -> {
+        try (Stream<String> stream = Files.lines(file.toPath())) {
+            stream.forEach(line -> {
+                log.info("Working on {}", line);
                 createSingleAuction(line);
             });
         }catch (Exception e){
@@ -57,7 +67,7 @@ public class AuctionCreatorService implements IAuctionCreatorService {
         auctionRequestBody.setToTime(endTime);
         auctionRequestBody.setItemId(itemUuId);
 
-        Mono<String> response = client.post().uri("localhost:8080/auction/set-action?")
+        Mono<String> response = client.post().uri("localhost:8080/auction/set-action")
                 .body(auctionRequestBody, AuctionRequestBody.class).retrieve().bodyToMono(String.class);
         response.subscribe(str->{
             log.info("response {}", str);
