@@ -1,25 +1,24 @@
 package com.ebay.demo.checker.service.impl;
 
-import com.ebay.demo.checker.model.AuctionRequestBody;
+import com.ebay.demo.checker.model.AuctionRequest;
+import com.ebay.demo.checker.model.AuctionRequestReponce;
+import com.ebay.demo.checker.model.AuctionResponse;
 import com.ebay.demo.checker.service.IAuctionCreatorService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ResourceUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
 
 import javax.annotation.PostConstruct;
 import java.io.File;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -69,20 +68,25 @@ public class AuctionCreatorService implements IAuctionCreatorService {
     }
 
     @Override
-    public void createSingleAuction(String itemUuId) {
+    public AuctionRequestReponce createSingleAuction(String itemUuId) {
+
+        AuctionRequestReponce requestReponce = new AuctionRequestReponce();
+
+
+
+        LocalDateTime fromTime = LocalDateTime.of(LocalDate.now(), LocalTime.MIN);
+        LocalDateTime toTime = fromTime.plus(2, ChronoUnit.HOURS);
+
+        AuctionRequest auctionRequest = new AuctionRequest();
+        auctionRequest.setFromTime(fromTime);
+        auctionRequest.setToTime(toTime);
+        auctionRequest.setItemId(itemUuId);
+        requestReponce.setAuctionRequest(auctionRequest);
 
         try {
             if (StringUtils.isEmpty(itemUuId)) {
                 throw new RuntimeException("Can't call for empty itemUuid.");
             }
-
-            LocalDateTime fromTime = LocalDateTime.of(LocalDate.now(), LocalTime.MIN);
-            LocalDateTime toTime = fromTime.plus(2, ChronoUnit.HOURS);
-
-            AuctionRequestBody auctionRequestBody = new AuctionRequestBody();
-            auctionRequestBody.setFromTime(fromTime);
-            auctionRequestBody.setToTime(toTime);
-            auctionRequestBody.setItemId(itemUuId);
 
             List<ServiceInstance> instances =  discoveryClient.getInstances("ebay-auction-service");
             ServiceInstance instance = instances.get(0);//TODO add roundrobin?
@@ -93,10 +97,17 @@ public class AuctionCreatorService implements IAuctionCreatorService {
                                     "/auction/set-auction?fromTime="
                                     + fromTime.toString() + "&toTime=" + toTime.toString() + "&itemId=" + itemUuId,
                             null, String.class);
+
+            AuctionResponse auctionResponse = new AuctionResponse();
+            auctionResponse.setMessage(response);
+
+            requestReponce.setAuctionResponse(auctionResponse);
             log.info("response {}", response);
         }catch (Exception e){
             log.error("", e);
         }
+
+        return requestReponce;
 
 //        Mono<String> response = client.post()
 //                .uri("localhost:8080/auction/set-action")

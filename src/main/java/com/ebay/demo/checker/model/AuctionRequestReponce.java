@@ -3,7 +3,9 @@ package com.ebay.demo.checker.model;
 import lombok.Data;
 
 @Data
-public class SchedulingTask {
+public class AuctionRequestReponce {
+
     private AuctionRequest auctionRequest;
-    private SchedulingTaskStatus schedulingTaskStatus;
+    private AuctionResponse auctionResponse;
+
 }

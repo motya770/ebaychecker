@@ -4,7 +4,7 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-public class AuctionRequestBody {
+public class AuctionRequest {
    private LocalDateTime fromTime;
    private LocalDateTime toTime;
    private String itemId;
