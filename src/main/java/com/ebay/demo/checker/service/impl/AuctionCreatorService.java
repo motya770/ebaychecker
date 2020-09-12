@@ -4,10 +4,12 @@ import com.ebay.demo.checker.model.AuctionRequestBody;
 import com.ebay.demo.checker.service.IAuctionCreatorService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ResourceUtils;
 import org.springframework.util.StringUtils;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
@@ -24,6 +26,8 @@ import java.util.stream.Stream;
 public class AuctionCreatorService implements IAuctionCreatorService {
     private WebClient client;
 
+    RestTemplate restTemplate;
+
     @PostConstruct
     public void init(){
         client = WebClient
@@ -31,6 +35,8 @@ public class AuctionCreatorService implements IAuctionCreatorService {
                 .defaultCookie("cookieKey", "cookieValue")
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .build();
+
+        restTemplate = new RestTemplate();
     }
 
     @Override
@@ -67,10 +73,29 @@ public class AuctionCreatorService implements IAuctionCreatorService {
         auctionRequestBody.setToTime(endTime);
         auctionRequestBody.setItemId(itemUuId);
 
-        Mono<String> response = client.post().uri("localhost:8080/auction/set-action")
-                .body(auctionRequestBody, AuctionRequestBody.class).retrieve().bodyToMono(String.class);
-        response.subscribe(str->{
-            log.info("response {}", str);
-        });
+        String response =restTemplate.postForObject(  "http://localhost:8080/auction/set-action", auctionRequestBody, String.class);
+        log.info("response {}", response);
+
+//        Mono<String> response = client.post()
+//                .uri("localhost:8080/auction/set-action")
+//                .accept(MediaType.APPLICATION_JSON)
+//                .body(Mono.just(auctionRequestBody), AuctionRequestBody.class)
+//                .retrieve()
+//                .onStatus(HttpStatus::is4xxClientError, r1 -> {
+//                    r1.bodyToMono(String.class).subscribe(s->{
+//                        log.error(s);
+//                    });
+//                    return Mono.error(new RuntimeException("Error"));
+//                })
+//                .onStatus(HttpStatus::isError, r2 -> {
+//                    r2.bodyToMono(String.class).subscribe(s->{
+//                        log.error(s);
+//                    });
+//                    return Mono.error(new RuntimeException("Error"));
+//                })
+//                .bodyToMono(String.class);
+//        response.subscribe(str->{
+//            log.info("response {}", str);
+//        });
     }
 }
