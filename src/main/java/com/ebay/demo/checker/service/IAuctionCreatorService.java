@@ -1,7 +1,6 @@
 package com.ebay.demo.checker.service;
 
-import com.ebay.demo.checker.model.AuctionRequest;
-import com.ebay.demo.checker.model.AuctionRequestReponce;
+import com.ebay.demo.checker.model.auction.AuctionRequestReponce;
 
 public interface IAuctionCreatorService {
     void startCreateAuctionsFromFile(String filePath);

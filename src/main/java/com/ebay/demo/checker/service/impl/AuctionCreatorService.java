@@ -1,8 +1,8 @@
 package com.ebay.demo.checker.service.impl;
 
-import com.ebay.demo.checker.model.AuctionRequest;
-import com.ebay.demo.checker.model.AuctionRequestReponce;
-import com.ebay.demo.checker.model.AuctionResponse;
+import com.ebay.demo.checker.model.auction.AuctionRequest;
+import com.ebay.demo.checker.model.auction.AuctionRequestReponce;
+import com.ebay.demo.checker.model.auction.AuctionResponse;
 import com.ebay.demo.checker.service.IAuctionCreatorService;
 import com.ebay.demo.checker.service.ISchedulerService;
 import lombok.extern.slf4j.Slf4j;
@@ -20,12 +20,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import javax.annotation.PostConstruct;
 import java.io.File;
 import java.nio.file.Files;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.stream.Stream;
 
 @Slf4j

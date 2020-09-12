@@ -1,9 +1,9 @@
 package com.ebay.demo.checker.service.impl;
 
-import com.ebay.demo.checker.model.AuctionRequest;
-import com.ebay.demo.checker.model.AuctionRequestReponce;
-import com.ebay.demo.checker.model.SchedulingTask;
-import com.ebay.demo.checker.model.SchedulingTaskStatus;
+import com.ebay.demo.checker.model.auction.AuctionRequest;
+import com.ebay.demo.checker.model.auction.AuctionRequestReponce;
+import com.ebay.demo.checker.model.scheduler.SchedulerTask;
+import com.ebay.demo.checker.model.scheduler.SchedulerTaskStatus;
 import com.ebay.demo.checker.service.ISchedulerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -18,7 +18,7 @@ import java.util.concurrent.*;
 @Service
 public class SchedulerService implements ISchedulerService {
 
-    private ConcurrentHashMap<String, SchedulingTask> tasks = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<String, SchedulerTask> tasks = new ConcurrentHashMap<>();
 
     private ScheduledExecutorService  executorService = Executors.newScheduledThreadPool(5);
 
@@ -57,11 +57,11 @@ public class SchedulerService implements ISchedulerService {
 
         requestResponse = auctionCreatorService.createSingleAuction(requestResponse);
         if(requestResponse.getAuctionResponse()!=null){
-            SchedulingTask schedulingTask = new SchedulingTask();
-            schedulingTask.setSchedulingTaskStatus(SchedulingTaskStatus.REJECTED_TEMPORALLY);
-            schedulingTask.setAuctionRequest(requestResponse.getAuctionRequest());
+            SchedulerTask schedulerTask = new SchedulerTask();
+            schedulerTask.setSchedulerTaskStatus(SchedulerTaskStatus.REJECTED_TEMPORALLY);
+            schedulerTask.setAuctionRequest(requestResponse.getAuctionRequest());
 
-            tasks.put(itemId, schedulingTask);
+            tasks.put(itemId, schedulerTask);
         }
     }
 }
