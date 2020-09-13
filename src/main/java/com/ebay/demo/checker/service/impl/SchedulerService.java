@@ -44,8 +44,6 @@ public class SchedulerService implements ISchedulerService {
 
     private void resendAuctions(){
         //Can use parallelStream
-        if(true)
-        return;
         tasks.entrySet()
            .stream()
                 .forEach(entry -> {
@@ -70,7 +68,10 @@ public class SchedulerService implements ISchedulerService {
         while (localDate!=null){
             localDate = fullDates.get(dateTime.toLocalDate());
             if(localDate!=null){
+                localDate = localDate.plusDays(1);
                 dateTime = dateTime.plusDays(1);
+            }else {
+                break;
             }
         }
         return dateTime;

@@ -6,7 +6,7 @@ import lombok.ToString;
 
 import java.time.LocalDateTime;
 
-@EqualsAndHashCode
+//@EqualsAndHashCode
 @ToString
 @Data
 public class AuctionRequest {
