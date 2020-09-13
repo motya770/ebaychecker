@@ -1,10 +1,12 @@
 package com.ebay.demo.checker.model.auction;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
 import java.time.LocalDateTime;
 
+@EqualsAndHashCode
 @ToString
 @Data
 public class AuctionRequest {

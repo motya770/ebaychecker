@@ -5,15 +5,13 @@ import com.ebay.demo.checker.model.auction.AuctionRequestReponce;
 import com.ebay.demo.checker.model.scheduler.SchedulerTask;
 import com.ebay.demo.checker.model.scheduler.SchedulerTaskStatus;
 import com.ebay.demo.checker.service.ISchedulerService;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
-import java.time.Duration;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
+import java.time.*;
 import java.time.temporal.ChronoUnit;
 import java.util.concurrent.*;
 
@@ -45,11 +43,13 @@ public class SchedulerService implements ISchedulerService {
     }
 
     private void resendAuctions(){
+        //Can use parallelStream
+        if(true)
+        return;
         tasks.entrySet()
-           .parallelStream()
+           .stream()
                 .forEach(entry -> {
-                    log.info("Resending on...." + entry.getKey() + ":" + entry.getValue());
-
+                    scheduleAuction(entry.getValue(), entry.getKey());
                 });
     }
 
@@ -115,6 +115,8 @@ public class SchedulerService implements ISchedulerService {
 
                 auctionRequest.setFromTime(fromTime);
                 auctionRequest.setToTime(toTime);
+
+                auctionRequestReponce.setAuctionRequest(auctionRequest);
             }
 
             auctionRequestReponce = auctionCreatorService.createSingleAuction(auctionRequestReponce);
@@ -126,23 +128,48 @@ public class SchedulerService implements ISchedulerService {
                     fullDates.put(fromDate, fromDate);
                 }
                 else if(error.contains("WeekFullAuctionException")){
+
                     LocalDate fromDate=  auctionRequestReponce.getAuctionRequest().getFromTime().toLocalDate();
-                    //TODO add all day of the week
-                    fullDates.put(fromDate, fromDate);
+                    addFullWeek(fromDate);
+
                 }else if(error.contains("OverlappingException")){
                     LocalDateTime fromTime=  auctionRequestReponce.getAuctionRequest().getFromTime();
                     overlappingTime.put(fromTime, fromTime);
                 }
+                SchedulerTask st = schedulerTask;
+                if(st==null){
+                    st=new SchedulerTask();
+                }
 
-                schedulerTask.setSchedulerTaskStatus(SchedulerTaskStatus.REJECTED_TEMPORALLY);
-                schedulerTask.setAuctionRequest(auctionRequestReponce.getAuctionRequest());
+                st.setSchedulerTaskStatus(SchedulerTaskStatus.REJECTED_TEMPORALLY);
+                st.setAuctionRequest(auctionRequestReponce.getAuctionRequest());
 
-                tasks.put(schedulerTask, itemId);
+                tasks.put(st, itemId);
             }else {
-                tasks.remove(schedulerTask);
+                if(schedulerTask!=null) {
+                    tasks.remove(schedulerTask);
+                }
             }
         };
 
         executorService.execute(runnable);
+    }
+
+    private void addFullWeek(LocalDate fromDate) {
+        int day = 7 - fromDate.getDayOfWeek().getValue();
+        for (int i = 0; i <= day; i++) {
+            LocalDate ld = fromDate.plusDays(i);
+            fullDates.put(ld, ld);
+        }
+    }
+
+    public static void main(String[] args) {
+        LocalDate localDate = LocalDate.now();
+        int day = 7 - localDate.getDayOfWeek().getValue();
+
+        for(int i = 0; i <= day; i++){
+            LocalDate ld = localDate.plusDays(i);
+            log.info("{}", ld);
+        }
     }
 }

@@ -18,9 +18,12 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import javax.annotation.PostConstruct;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.nio.file.Files;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 @Slf4j
@@ -57,14 +60,25 @@ public class AuctionCreatorService implements IAuctionCreatorService {
             log.error("", e);
         }
         //concurrent
-        try (Stream<String> stream = Files.lines(file.toPath())) {
-            stream.forEach(line -> {
-                log.info("Working on {}", line);
+
+        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+            String line;
+            int counter=0;
+            while ((line = br.readLine()) != null) {
+                log.info("counter {}", counter++);
                 schedulerService.scheduleAuction(line, null);
-            });
+            }
         }catch (Exception e){
-            log.error("", e);
+            log.error("{}", e);
         }
+
+//        try (Stream<String> stream = Files.lines(file.toPath())) {
+//            stream.forEach(line -> {
+//
+//            });
+//        }catch (Exception e){
+//            log.error("", e);
+//        }
     }
 
     @Override
