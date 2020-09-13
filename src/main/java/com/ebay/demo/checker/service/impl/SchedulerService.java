@@ -52,10 +52,11 @@ public class SchedulerService implements ISchedulerService {
     }
 
     // gives date that is not already full (looking to the next day)
-    private LocalDateTime getSuitableNextTime(LocalDateTime dateTime){
+    private LocalDateTime getSuitableDate(LocalDateTime dateTime){
 
         if(dateTime.getHour()>=23 || dateTime.getHour()<8){
             dateTime = dateTime.plusDays(1);
+            dateTime = getStartingHourOfScheduler(dateTime);
         }
 
         LocalDate localDate = dateTime.toLocalDate();
@@ -68,20 +69,23 @@ public class SchedulerService implements ISchedulerService {
         return dateTime;
     }
 
+    private LocalDateTime getStartingHourOfScheduler(LocalDateTime dateTime) {
+        dateTime = dateTime.withHour(8).withMinute(1);
+        return dateTime;
+    }
+
     @Override
     public void scheduleAuction(String itemId, SchedulerTask schedulerTask) {
 
         Runnable runnable = ()->{
 
-            AuctionRequestReponce auctionRequestReponce = null;
+            AuctionRequestReponce auctionRequestReponce = new AuctionRequestReponce();
             //if task is fired for first time
             if(schedulerTask==null){
-                auctionRequestReponce = new AuctionRequestReponce();
 
                 //starting from 8pm
-                LocalDateTime fromTime =LocalDateTime.of(LocalDate.now(), LocalTime.MIN)
-                        .plus(Duration.of(8, ChronoUnit.HOURS)).plus(Duration.of(1, ChronoUnit.MINUTES));
-                fromTime = getSuitableNextTime(fromTime);
+                LocalDateTime fromTime = getStartingHourOfScheduler(LocalDateTime.now());
+                fromTime = getSuitableDate(fromTime);
                 LocalDateTime toTime = fromTime.plus(2, ChronoUnit.HOURS);
 
                 AuctionRequest auctionRequest = new AuctionRequest();
@@ -90,14 +94,16 @@ public class SchedulerService implements ISchedulerService {
                 auctionRequest.setItemId(itemId);
                 auctionRequestReponce.setAuctionRequest(auctionRequest);
 
-            }else {
+            } else {
 
                 AuctionRequest auctionRequest =  schedulerTask.getAuctionRequest();
 
                 LocalDateTime fromTime = schedulerTask.getAuctionRequest().getFromTime();
+                fromTime = getSuitableDate(fromTime);
+
                 fromTime = fromTime.plus(2, ChronoUnit.HOURS)
                         .plus(1, ChronoUnit.MINUTES);
-                fromTime = getSuitableNextTime(fromTime);
+
                 LocalDateTime toTime = fromTime.plus(2, ChronoUnit.HOURS);
 
                 auctionRequest.setFromTime(fromTime);

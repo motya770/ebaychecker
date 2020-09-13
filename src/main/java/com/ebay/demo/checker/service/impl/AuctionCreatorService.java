@@ -77,14 +77,19 @@ public class AuctionCreatorService implements IAuctionCreatorService {
                 throw new RuntimeException("Can't call for empty itemUuid.");
             }
 
+            if(auctionRequest.getFromTime()==null || auctionRequest.getToTime()==null){
+                throw new RuntimeException("Can't call for empty time frame.");
+            }
+
             List<ServiceInstance> instances =  discoveryClient.getInstances("ebay-auction-service");
             ServiceInstance instance = instances.get(0);//TODO add roundrobin?
 
+            log.info("Trying to schedule {}", auctionRequest);
             //TODO think about https
             String response = restTemplate
                     .postForObject(  "http://" + instance.getHost() + ":" +  instance.getPort() +
                                     "/auction/set-auction?fromTime="
-                                    + auctionRequest.toString() + "&toTime=" + auctionRequest.toString() + "&itemId=" + auctionRequest.getItemId(),
+                                    + auctionRequest.getFromTime() + "&toTime=" + auctionRequest.getToTime().toString() + "&itemId=" + auctionRequest.getItemId(),
                             null, String.class);
 
             auctionResponse.setMessage(response);

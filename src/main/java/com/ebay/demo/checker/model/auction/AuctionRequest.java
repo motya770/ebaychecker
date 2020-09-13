@@ -1,8 +1,11 @@
 package com.ebay.demo.checker.model.auction;
 
 import lombok.Data;
+import lombok.ToString;
+
 import java.time.LocalDateTime;
 
+@ToString
 @Data
 public class AuctionRequest {
    private LocalDateTime fromTime;
