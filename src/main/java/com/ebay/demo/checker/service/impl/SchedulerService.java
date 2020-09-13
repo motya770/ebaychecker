@@ -26,7 +26,7 @@ public class SchedulerService implements ISchedulerService {
 
     private ConcurrentHashMap<LocalDateTime, LocalDateTime> overlappingTime = new ConcurrentHashMap<>();
 
-    private ScheduledExecutorService  executorService = Executors.newScheduledThreadPool(1);
+    private ScheduledExecutorService  executorService = Executors.newScheduledThreadPool(5);
 
     @Autowired
     private AuctionCreatorService auctionCreatorService;
@@ -46,7 +46,7 @@ public class SchedulerService implements ISchedulerService {
     private void resendAuctions(){
         //Can use parallelStream
         int counter=0;
-        while (counter<=1) {
+        while (counter<=10) {
             SchedulerTask schedulerTask =  tasks.poll();
             if(schedulerTask==null){
                 break;
@@ -54,13 +54,6 @@ public class SchedulerService implements ISchedulerService {
             scheduleAuction(schedulerTask.getAuctionRequest().getItemId(), schedulerTask);
             counter++;
         }
-
-
-//        tasks.entrySet()
-//           .stream()
-//                .forEach(entry -> {
-//
-//                });
     }
 
     // gives date that is not already full (looking to the next day)
