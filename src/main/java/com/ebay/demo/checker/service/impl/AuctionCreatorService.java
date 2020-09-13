@@ -60,7 +60,7 @@ public class AuctionCreatorService implements IAuctionCreatorService {
         try (Stream<String> stream = Files.lines(file.toPath())) {
             stream.forEach(line -> {
                 log.info("Working on {}", line);
-                schedulerService.scheduleAuction(line);
+                schedulerService.scheduleAuction(line, null);
             });
         }catch (Exception e){
             log.error("", e);
