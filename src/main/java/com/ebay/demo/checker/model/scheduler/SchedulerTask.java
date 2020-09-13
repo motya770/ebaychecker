@@ -2,7 +2,6 @@ package com.ebay.demo.checker.model.scheduler;
 
 import com.ebay.demo.checker.model.auction.AuctionRequest;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 
