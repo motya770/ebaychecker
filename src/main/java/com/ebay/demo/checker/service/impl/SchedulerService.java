@@ -25,7 +25,9 @@ public class SchedulerService implements ISchedulerService {
 
     private ConcurrentHashMap<LocalDate, LocalDate> fullDates = new ConcurrentHashMap<>();
 
-    private ScheduledExecutorService  executorService = Executors.newScheduledThreadPool(5);
+    private ConcurrentHashMap<LocalDateTime, LocalDateTime> overlappingTime = new ConcurrentHashMap<>();
+
+    private ScheduledExecutorService  executorService = Executors.newScheduledThreadPool(1);
 
     @Autowired
     private AuctionCreatorService auctionCreatorService;
@@ -52,7 +54,12 @@ public class SchedulerService implements ISchedulerService {
     }
 
     // gives date that is not already full (looking to the next day)
-    private LocalDateTime getSuitableDate(LocalDateTime dateTime){
+    private LocalDateTime getSuitableDateTime(LocalDateTime dateTime){
+
+        LocalDateTime localDateTime = overlappingTime.get(dateTime);
+        if(localDateTime!=null){
+            dateTime = dateTime.plusHours(2).plusMinutes(1);
+        }
 
         if(dateTime.getHour()>=23 || dateTime.getHour()<8){
             dateTime = dateTime.plusDays(1);
@@ -85,7 +92,7 @@ public class SchedulerService implements ISchedulerService {
 
                 //starting from 8pm
                 LocalDateTime fromTime = getStartingHourOfScheduler(LocalDateTime.now());
-                fromTime = getSuitableDate(fromTime);
+                fromTime = getSuitableDateTime(fromTime);
                 LocalDateTime toTime = fromTime.plus(2, ChronoUnit.HOURS);
 
                 AuctionRequest auctionRequest = new AuctionRequest();
@@ -99,7 +106,7 @@ public class SchedulerService implements ISchedulerService {
                 AuctionRequest auctionRequest =  schedulerTask.getAuctionRequest();
 
                 LocalDateTime fromTime = schedulerTask.getAuctionRequest().getFromTime();
-                fromTime = getSuitableDate(fromTime);
+                fromTime = getSuitableDateTime(fromTime);
 
                 fromTime = fromTime.plus(2, ChronoUnit.HOURS)
                         .plus(1, ChronoUnit.MINUTES);
@@ -111,16 +118,20 @@ public class SchedulerService implements ISchedulerService {
             }
 
             auctionRequestReponce = auctionCreatorService.createSingleAuction(auctionRequestReponce);
-            if(auctionRequestReponce.getAuctionResponse().getError() != null){
+            String error = auctionRequestReponce.getAuctionResponse().getError();
 
-                if(auctionRequestReponce.getAuctionResponse().getError().contains("DayFullAuctionException")){
+            if(error != null){
+                if(error.contains("DayFullAuctionException")){
                     LocalDate fromDate=  auctionRequestReponce.getAuctionRequest().getFromTime().toLocalDate();
                     fullDates.put(fromDate, fromDate);
                 }
-                else if(auctionRequestReponce.getAuctionResponse().getError().contains("WeekFullAuctionException")){
+                else if(error.contains("WeekFullAuctionException")){
                     LocalDate fromDate=  auctionRequestReponce.getAuctionRequest().getFromTime().toLocalDate();
                     //TODO add all day of the week
                     fullDates.put(fromDate, fromDate);
+                }else if(error.contains("OverlappingException")){
+                    LocalDateTime fromTime=  auctionRequestReponce.getAuctionRequest().getFromTime();
+                    overlappingTime.put(fromTime, fromTime);
                 }
 
                 schedulerTask.setSchedulerTaskStatus(SchedulerTaskStatus.REJECTED_TEMPORALLY);
