@@ -121,6 +121,8 @@ public class SchedulerService implements ISchedulerService {
                 schedulerTask.setAuctionRequest(auctionRequestReponce.getAuctionRequest());
 
                 tasks.put(schedulerTask, itemId);
+            }else {
+                tasks.remove(schedulerTask);
             }
         };
 
