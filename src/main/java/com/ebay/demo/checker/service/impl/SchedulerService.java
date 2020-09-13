@@ -9,6 +9,7 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import javax.annotation.PostConstruct;
 import java.time.*;
@@ -19,7 +20,7 @@ import java.util.concurrent.*;
 @Service
 public class SchedulerService implements ISchedulerService {
 
-    private ConcurrentHashMap<SchedulerTask, String> tasks = new ConcurrentHashMap<>();
+    private ConcurrentLinkedQueue<SchedulerTask> tasks = new ConcurrentLinkedQueue<>();
 
     private ConcurrentHashMap<LocalDate, LocalDate> fullDates = new ConcurrentHashMap<>();
 
@@ -44,11 +45,22 @@ public class SchedulerService implements ISchedulerService {
 
     private void resendAuctions(){
         //Can use parallelStream
-        tasks.entrySet()
-           .stream()
-                .forEach(entry -> {
-                    scheduleAuction(entry.getValue(), entry.getKey());
-                });
+        int counter=0;
+        while (counter<=1) {
+            SchedulerTask schedulerTask =  tasks.poll();
+            if(schedulerTask==null){
+                break;
+            }
+            scheduleAuction(schedulerTask.getAuctionRequest().getItemId(), schedulerTask);
+            counter++;
+        }
+
+
+//        tasks.entrySet()
+//           .stream()
+//                .forEach(entry -> {
+//
+//                });
     }
 
     // gives date that is not already full (looking to the next day)
@@ -69,7 +81,7 @@ public class SchedulerService implements ISchedulerService {
             localDate = fullDates.get(dateTime.toLocalDate());
             if(localDate!=null){
                 localDate = localDate.plusDays(1);
-                dateTime = dateTime.plusDays(1);
+                dateTime = getStartingHourOfScheduler(dateTime.plusDays(1));
             }else {
                 break;
             }
@@ -123,7 +135,7 @@ public class SchedulerService implements ISchedulerService {
             auctionRequestReponce = auctionCreatorService.createSingleAuction(auctionRequestReponce);
             String error = auctionRequestReponce.getAuctionResponse().getError();
 
-            if(error != null){
+            if(!StringUtils.isEmpty(error)){
                 if(error.contains("DayFullAuctionException")){
                     LocalDate fromDate=  auctionRequestReponce.getAuctionRequest().getFromTime().toLocalDate();
                     fullDates.put(fromDate, fromDate);
@@ -145,11 +157,11 @@ public class SchedulerService implements ISchedulerService {
                 st.setSchedulerTaskStatus(SchedulerTaskStatus.REJECTED_TEMPORALLY);
                 st.setAuctionRequest(auctionRequestReponce.getAuctionRequest());
 
-                tasks.put(st, itemId);
+                tasks.add(st);
             }else {
-                if(schedulerTask!=null) {
-                    tasks.remove(schedulerTask);
-                }
+//                if(schedulerTask!=null) {
+//                    tasks.remove(schedulerTask);
+//                }
             }
         };
 

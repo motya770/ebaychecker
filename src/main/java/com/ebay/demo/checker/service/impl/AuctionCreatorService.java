@@ -23,15 +23,19 @@ import java.io.File;
 import java.io.FileReader;
 import java.nio.file.Files;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 @Slf4j
 @Service
 public class AuctionCreatorService implements IAuctionCreatorService {
+
+    public static final String EBAY_SERVERS = "ebayServers";
+
     private WebClient client;
 
-    RestTemplate restTemplate;
+    private RestTemplate restTemplate;
 
     @Autowired
     private DiscoveryClient discoveryClient;
@@ -81,6 +85,8 @@ public class AuctionCreatorService implements IAuctionCreatorService {
 //        }
     }
 
+    private ConcurrentHashMap<String, String> ebayServers = new ConcurrentHashMap<>();
+
     @Override
     public AuctionRequestReponce createSingleAuction(AuctionRequestReponce auctionRequestReponce) {
 
@@ -95,13 +101,17 @@ public class AuctionCreatorService implements IAuctionCreatorService {
                 throw new RuntimeException("Can't call for empty time frame.");
             }
 
-            List<ServiceInstance> instances =  discoveryClient.getInstances("ebay-auction-service");
-            ServiceInstance instance = instances.get(0);//TODO add roundrobin?
+            String ebayServer = ebayServers.get(EBAY_SERVERS);
+            if(ebayServer==null) {
+                List<ServiceInstance> instances =  discoveryClient.getInstances("ebay-auction-service");
+                ServiceInstance instance = instances.get(0);//TODO add round-robin?
+                ebayServers.put(EBAY_SERVERS, "http://" + instance.getHost() + ":" +  instance.getPort());
+            }
 
             log.info("Trying to schedule {}", auctionRequest);
             //TODO think about https
             String response = restTemplate
-                    .postForObject(  "http://" + instance.getHost() + ":" +  instance.getPort() +
+                    .postForObject(   ebayServer+
                                     "/auction/set-auction?fromTime="
                                     + auctionRequest.getFromTime() + "&toTime=" + auctionRequest.getToTime().toString() + "&itemId=" + auctionRequest.getItemId(),
                             null, String.class);
