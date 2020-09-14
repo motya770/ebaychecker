@@ -55,7 +55,7 @@ public class SchedulerService implements ISchedulerService {
             if(schedulerTask==null){
                 break;
             }
-            scheduleAuction(schedulerTask.getAuctionRequest().getItemId(), schedulerTask);
+            retryToScheduleAuction(schedulerTask);
             counter++;
         }
     }
@@ -93,7 +93,16 @@ public class SchedulerService implements ISchedulerService {
     }
 
     @Override
-    public void scheduleAuction(String itemId, SchedulerTask schedulerTask) {
+    public void scheduleAuction(String itemId) {
+        scheduleAuction(itemId, null);
+    }
+
+    @Override
+    public void retryToScheduleAuction(SchedulerTask schedulerTask) {
+        scheduleAuction(schedulerTask.getAuctionRequest().getItemId(), schedulerTask);
+    }
+
+    private void scheduleAuction(String itemId, SchedulerTask schedulerTask) {
 
         Runnable runnable = ()->{
 

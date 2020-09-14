@@ -4,5 +4,7 @@ import com.ebay.demo.checker.model.scheduler.SchedulerTask;
 
 public interface ISchedulerService {
 
-   void scheduleAuction(String itemId, SchedulerTask schedulerTask);
+   void scheduleAuction(String itemId);
+
+   void retryToScheduleAuction(SchedulerTask schedulerTask);
 }

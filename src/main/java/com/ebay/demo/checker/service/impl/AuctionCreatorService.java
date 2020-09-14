@@ -67,7 +67,7 @@ public class AuctionCreatorService implements IAuctionCreatorService {
             int counter=0;
             while ((line = br.readLine()) != null) {
                 log.info("counter {}", counter++);
-                schedulerService.scheduleAuction(line, null);
+                schedulerService.scheduleAuction(line);
             }
         }catch (Exception e){
             log.error("{}", e);
